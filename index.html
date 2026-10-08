@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Video → MP3</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,#050505,#1b1b1b);font-family:Arial,sans-serif;color:#fff}.box{width:min(100%,480px);padding:28px;border:1px solid #333;border-radius:22px;background:#111;box-shadow:0 20px 60px #0008}h1{text-align:center;margin:0 0 8px}.sub{text-align:center;color:#999;margin-bottom:24px}input{width:100%;padding:16px;border:1px solid #444;border-radius:12px;background:#222;color:#fff;font-size:15px;outline:none}button,.download{width:100%;margin-top:15px;padding:16px;border:0;border-radius:12px;font-size:16px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer}button{background:#fff;color:#000}button:disabled{opacity:.55}.download{display:none;background:#19d66b;color:#000}#status{text-align:center;min-height:24px;margin-top:18px;color:#bbb}.note{margin-top:20px;text-align:center;color:#777;font-size:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<main class="box">
+<h1>🎵 Video → MP3</h1>
+<div class="sub">Paste a direct video-file URL</div>
+<input id="url" type="url" placeholder="https://example.com/video.mp4" autocomplete="off">
+<button id="go">🎵 Convert to MP3</button>
+<div id="status"></div>
+<a id="download" class="download">⬇️ Download MP3</a>
+<div class="note">Use only direct video URLs you own or have permission to process. YouTube, Instagram and Facebook extraction is not included.</div>
+</main>
+<script>
+const url=document.querySelector("#url"),go=document.querySelector("#go"),status=document.querySelector("#status"),download=document.querySelector("#download");
+go.onclick=async()=>{
+  const value=url.value.trim();
+  if(!value){status.textContent="❌ Video URL enter karo.";return}
+  try{new URL(value)}catch{status.textContent="❌ Valid URL enter karo.";return}
+  go.disabled=true;download.style.display="none";status.textContent="⏳ Downloading and converting...";
+  try{
+    const r=await fetch("/convert",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:value})});
+    if(!r.ok){let e=await r.json().catch(()=>({}));throw new Error(e.error||"Conversion failed")}
+    const blob=await r.blob();
+    const objectUrl=URL.createObjectURL(blob);
+    download.href=objectUrl;download.download="audio.mp3";download.style.display="block";
+    status.textContent="✅ MP3 ready!";
+  }catch(e){status.textContent="❌ "+e.message}
+  finally{go.disabled=false}
+};
+</script>
+</body>
+</html>
